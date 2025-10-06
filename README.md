@@ -29,16 +29,6 @@ Backend API will be at http://localhost:8765
 To apply migrations:
 ```bash
 docker compose exec backend alembic upgrade head
-```
-
-### GHCR Setup
-To publish images to GitHub Container Registry:
-
-1. Create a Personal Access Token with `write:packages` scope
-2. Add it to repo secrets as `CR_PAT`
-3. On push to `main`, images will be published to:
-   - `ghcr.io/enduser101/mydea-backend:latest`
-   - `ghcr.io/enduser101/mydea-frontend:latest`
 
 ---
 
