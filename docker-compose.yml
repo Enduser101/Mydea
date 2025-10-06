@@ -1,4 +1,3 @@
-
 version: "3.9"
 
 services:
@@ -8,6 +7,8 @@ services:
       - "${FRONTEND_PORT:-13245}:3000"
     depends_on:
       - backend
+    # Optional: uncomment to build locally instead
+    # build: ./frontend
 
   backend:
     image: ghcr.io/enduser101/mydea-backend:latest
@@ -17,6 +18,8 @@ services:
       - "${BACKEND_PORT:-8765}:8000"
     depends_on:
       - db
+    # Optional: uncomment to build locally instead
+    # build: ./backend
 
   db:
     image: postgres:15
