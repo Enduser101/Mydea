@@ -21,10 +21,10 @@ jobs:
         with:
           context: ./backend
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/mydea-backend:latest
+          tags: ghcr.io/enduser101/mydea-backend:latest
       - name: Build and push frontend
         uses: docker/build-push-action@v4
         with:
           context: ./frontend
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/mydea-frontend:latest
+          tags: ghcr.io/enduser101/mydea-frontend:latest
