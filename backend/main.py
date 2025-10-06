@@ -1,47 +1,47 @@
-
-from fastapi import FastAPI, Depends
+import os
+from fastapi import FastAPI, HTTPException, Depends
 from sqlalchemy.orm import Session
-from . import models, database
-from pydantic import BaseModel
-from typing import Optional
+from database import SessionLocal, engine, Base
+import models, crud, schemas
 
-database.Base.metadata.create_all(bind=database.engine)
-app = FastAPI()
+Base.metadata.create_all(bind=engine)
 
-class IdeaSchema(BaseModel):
-    title: str
-    description: Optional[str] = None
-    tags: Optional[str] = None
-    custom_fields: Optional[dict] = {}
-    archived: Optional[bool] = False
-    position: Optional[int] = 0
+app = FastAPI(title='Mydea API')
 
-    class Config:
-        orm_mode = True
+@app.get('/')
+def root():
+    return {'status': 'Mydea backend running'}
 
-@app.post("/ideas")
-def create_idea(idea: IdeaSchema, db: Session = Depends(database.SessionLocal)):
-    db_idea = models.Idea(**idea.dict())
-    db.add(db_idea)
-    db.commit()
-    db.refresh(db_idea)
-    return db_idea
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
-@app.get("/ideas")
-def list_ideas(db: Session = Depends(database.SessionLocal)):
-    return db.query(models.Idea).filter(models.Idea.archived == False).order_by(models.Idea.position, models.Idea.created_at).all()
+@app.get('/ideas', response_model=list[schemas.Idea])
+def read_ideas(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    return crud.get_ideas(db, skip=skip, limit=limit)
 
-@app.patch("/ideas/{idea_id}")
-def update_idea(idea_id: int, idea: dict, db: Session = Depends(database.SessionLocal)):
-    db_idea = db.query(models.Idea).filter(models.Idea.id == idea_id).first()
+@app.post('/ideas', response_model=schemas.Idea)
+def create_idea(idea: schemas.IdeaCreate, db: Session = Depends(get_db)):
+    return crud.create_idea(db, idea)
+
+@app.patch('/ideas/{idea_id}', response_model=schemas.Idea)
+def patch_idea(idea_id: int, payload: schemas.IdeaUpdate, db: Session = Depends(get_db)):
+    db_idea = crud.get_idea(db, idea_id)
     if not db_idea:
-        return {"error": "Not found"}
-    for key, value in idea.items():
-        setattr(db_idea, key, value)
-    db.commit()
-    db.refresh(db_idea)
-    return db_idea
+        raise HTTPException(status_code=404, detail='Idea not found')
+    return crud.update_idea(db, idea_id, payload)
 
-@app.get("/archive")
-def list_archived(db: Session = Depends(database.SessionLocal)):
-    return db.query(models.Idea).filter(models.Idea.archived == True).all()
+@app.delete('/ideas/{idea_id}')
+def archive_idea(idea_id: int, db: Session = Depends(get_db)):
+    db_idea = crud.get_idea(db, idea_id)
+    if not db_idea:
+        raise HTTPException(status_code=404, detail='Idea not found')
+    crud.archive_idea(db, idea_id)
+    return {'status': 'archived', 'id': idea_id}
+
+@app.get('/archive', response_model=list[schemas.Idea])
+def read_archive(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    return crud.get_archived(db, skip=skip, limit=limit)
