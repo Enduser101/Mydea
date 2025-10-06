@@ -1,7 +1,7 @@
-FROM node:20-alpine as build
+FROM node:18-alpine AS build
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci --no-fund --no-audit
+RUN npm install --no-fund --no-audit
 COPY . .
 RUN npm run build
 FROM node:20-alpine
