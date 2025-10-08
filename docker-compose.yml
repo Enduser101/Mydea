@@ -2,22 +2,27 @@ version: "3.9"
 
 services:
   frontend:
-    image: ghcr.io/enduser101/mydea-frontend:latest
+    build: ./frontend
+    # image: ghcr.io/enduser101/mydea-frontend:latest
     ports:
       - "${FRONTEND_PORT:-13245}:3000"
     depends_on:
       - backend
-    # build: ./frontend  # uncomment to build locally instead of pulling GHCR
 
   backend:
-    image: ghcr.io/enduser101/mydea-backend:latest
+    build: ./backend
+    # image: ghcr.io/enduser101/mydea-backend:latest
     environment:
-      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db/${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER:-mydea}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-mydea}
+      - POSTGRES_DB=${POSTGRES_DB:-mydea}
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-mydea}:${POSTGRES_PASSWORD:-mydea}@db:5432/${POSTGRES_DB:-mydea}
     ports:
       - "${BACKEND_PORT:-8765}:8000"
     depends_on:
       - db
-    # build: ./backend  # uncomment to build locally instead of pulling GHCR
+    volumes:
+      - ./backend/entrypoint.sh:/app/entrypoint.sh
 
   db:
     image: postgres:15
